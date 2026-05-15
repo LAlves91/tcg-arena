@@ -233,8 +233,8 @@ SpellTable is officially MTG-only and hasn’t expanded. The webcam-Pokémon and
 
 ### 8.3 Stack sketch
 
-- **Frontend:** React (web) + React Native (mobile companion). Discord Activity is a React app served from your CDN with iframe embedding.
-- **Backend:** Node.js or Go service, Postgres for persistent data (users, decks, tournaments, matches), Redis for matchmaking/lobby state.
+- **Frontend:** Angular PWA (web & mobile companion). Discord Activity is an Angular app served from your CDN with iframe embedding.
+- **Backend:** Node.js service (in Typescript), Postgres for persistent data (users, decks, tournaments, matches), Redis for matchmaking/lobby state.
 - **Media:** LiveKit cluster.
 - **CV:** Ximilar or equivalent vendor at launch; in-house ML service later.
 - **Auth:** Discord OAuth (mandatory if Activity), email/social login if standalone.
