@@ -1,0 +1,229 @@
+// TCG Arena base schema. Models are intentionally minimal; each downstream
+// step extends the model it owns (S06 auth, S08 friendships, S15 cards,
+// S19 lobbies, S22 decks, S25/S33 matches, S36 tournaments).
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---- User & auth -------------------------------------------------------
+
+model User {
+  id          String   @id @default(uuid()) @db.Uuid
+  discordId   String?  @unique
+  email       String?  @unique
+  displayName String
+  avatarUrl   String?
+  locale      String   @default("en")
+  region      String   @default("NA-East")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  authIdentities    AuthIdentity[]
+  sessions          Session[]
+  friendshipsAsA    Friendship[]   @relation("FriendshipUserA")
+  friendshipsAsB    Friendship[]   @relation("FriendshipUserB")
+  decks             Deck[]
+  hostedLobbies     Lobby[]
+  wonMatches        Match[]        @relation("MatchWinner")
+  organizedTournaments Tournament[] @relation("TournamentOrganizer")
+
+  @@index([region])
+}
+
+model AuthIdentity {
+  id              String       @id @default(uuid()) @db.Uuid
+  userId          String       @db.Uuid
+  provider        AuthProvider
+  providerSubject String
+  createdAt       DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerSubject])
+  @@index([userId])
+}
+
+enum AuthProvider {
+  discord
+  email
+}
+
+model Session {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @db.Uuid
+  refreshTokenHash String
+  userAgent        String?
+  ip               String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ---- Social ------------------------------------------------------------
+
+model Friendship {
+  id        String           @id @default(uuid()) @db.Uuid
+  userAId   String           @db.Uuid
+  userBId   String           @db.Uuid
+  status    FriendshipStatus @default(pending)
+  createdAt DateTime         @default(now())
+
+  userA User @relation("FriendshipUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User @relation("FriendshipUserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  // Canonical ordering enforced in code (userAId < userBId) gives the
+  // unique pair without symmetric duplication.
+  @@unique([userAId, userBId])
+  @@index([userBId])
+}
+
+enum FriendshipStatus {
+  pending
+  accepted
+  blocked
+}
+
+// ---- Decks -------------------------------------------------------------
+
+model Deck {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  gameId    String
+  name      String
+  listJson  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([gameId])
+}
+
+// ---- Lobbies, matches, tournaments (scaffolds) -------------------------
+
+model Lobby {
+  id          String          @id @default(uuid()) @db.Uuid
+  hostUserId  String?         @db.Uuid
+  gameId      String
+  format      String
+  visibility  LobbyVisibility @default(public)
+  status      LobbyStatus     @default(open)
+  createdAt   DateTime        @default(now())
+
+  host    User?   @relation(fields: [hostUserId], references: [id], onDelete: SetNull)
+  matches Match[]
+
+  @@index([gameId, visibility, status])
+  @@index([hostUserId])
+}
+
+enum LobbyVisibility {
+  public
+  private
+  unlisted
+}
+
+enum LobbyStatus {
+  open
+  matchReady
+  inProgress
+  closed
+}
+
+model Match {
+  id            String      @id @default(uuid()) @db.Uuid
+  lobbyId       String?     @db.Uuid
+  gameId        String
+  format        String
+  startedAt     DateTime?
+  endedAt       DateTime?
+  winnerUserId  String?     @db.Uuid
+  statusJson    Json        @default("{}")
+  status        MatchStatus @default(created)
+  createdAt     DateTime    @default(now())
+
+  lobby  Lobby? @relation(fields: [lobbyId], references: [id], onDelete: SetNull)
+  winner User?  @relation("MatchWinner", fields: [winnerUserId], references: [id], onDelete: SetNull)
+
+  @@index([gameId, status])
+  @@index([lobbyId])
+  @@index([winnerUserId])
+}
+
+enum MatchStatus {
+  created
+  playing
+  awaitingResult
+  disputed
+  finalized
+}
+
+model Tournament {
+  id              String              @id @default(uuid()) @db.Uuid
+  organizerUserId String?             @db.Uuid
+  gameId          String
+  format          String
+  bracketType     TournamentBracket
+  roundTimeMin    Int                 @default(50)
+  decklistPolicy  DecklistPolicy      @default(closed)
+  prizeInfo       String?
+  status          TournamentStatus    @default(scheduled)
+  startsAt        DateTime?
+  createdAt       DateTime            @default(now())
+
+  organizer User? @relation("TournamentOrganizer", fields: [organizerUserId], references: [id], onDelete: SetNull)
+
+  @@index([gameId, status])
+  @@index([organizerUserId])
+}
+
+enum TournamentBracket {
+  swiss
+  singleElim
+}
+
+enum DecklistPolicy {
+  open
+  closed
+  private
+}
+
+enum TournamentStatus {
+  scheduled
+  registration
+  inProgress
+  finalized
+  cancelled
+}
+
+// ---- Cards (populated by S15) ------------------------------------------
+
+model Card {
+  id         String   @id @default(uuid()) @db.Uuid
+  gameId     String
+  externalId String
+  name       String
+  setCode    String?
+  number     String?
+  rarity     String?
+  imageUrl   String?
+  dataJson   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([gameId, externalId])
+  @@index([gameId, name])
+}
