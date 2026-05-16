@@ -1,19 +1,48 @@
-/**
- * This is not a production server yet!
- * This is only a minimal backend to get started.
- */
-
-import { Logger } from '@nestjs/common';
+import compress from '@fastify/compress';
+import helmet from '@fastify/helmet';
 import { NestFactory } from '@nestjs/core';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { Logger } from 'nestjs-pino';
+import type { IncomingMessage } from 'node:http';
+import type { Http2ServerRequest } from 'node:http2';
+import { randomUUID } from 'node:crypto';
 import { AppModule } from './app/app.module';
+import { EnvService } from './config/env.service';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const globalPrefix = 'api';
-  app.setGlobalPrefix(globalPrefix);
-  const port = process.env['PORT'] || 3000;
-  await app.listen(port);
-  Logger.log(`🚀 Application is running on: http://localhost:${port}/${globalPrefix}`);
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter({
+      trustProxy: true,
+      genReqId: (req: IncomingMessage | Http2ServerRequest) => {
+        const incoming = req.headers['x-trace-id'];
+        if (typeof incoming === 'string' && incoming.length > 0) {
+          return incoming;
+        }
+        return randomUUID();
+      },
+    }),
+    { bufferLogs: true },
+  );
+
+  app.useLogger(app.get(Logger));
+
+  const env = app.get(EnvService);
+
+  await app.register(helmet);
+  await app.register(compress);
+
+  app.enableCors({
+    origin: [env.get('WEB_ORIGIN'), env.get('DISCORD_ACTIVITY_ORIGIN')],
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-Trace-Id'],
+  });
+
+  app.enableShutdownHooks();
+
+  const port = env.get('PORT');
+  await app.listen(port, '0.0.0.0');
 }
 
-bootstrap();
+void bootstrap();
