@@ -65,7 +65,15 @@
         "buildTarget": "web:build:development",
         "runner": "vitest"
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^production"],
+      "options": {
+        "command": "tsc -p apps/web/tsconfig.app.json --noEmit"
+      }
     }
   },
-  "tags": []
+  "tags": ["scope:web", "type:app"]
 }
