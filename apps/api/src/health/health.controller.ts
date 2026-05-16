@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, ServiceUnavailableException } from '@nestjs/common';
 import { HealthCheckRegistry, HealthCheckResult, HealthCheckStatus } from './health-check.registry';
 
 const TRACKED_DEPENDENCIES = ['db', 'redis'] as const;
@@ -22,9 +22,16 @@ export class HealthController {
   async readiness(): Promise<ReadinessResponse> {
     const checks = await this.registry.run(TRACKED_DEPENDENCIES);
     const anyDown = Object.values(checks).some((c) => c.status === 'down');
-    return {
+    const response: ReadinessResponse = {
       status: anyDown ? 'down' : 'ok',
       checks,
     };
+    if (anyDown) {
+      throw new ServiceUnavailableException({
+        message: 'One or more dependencies are unavailable.',
+        checks,
+      });
+    }
+    return response;
   }
 }

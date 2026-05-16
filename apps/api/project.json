@@ -73,6 +73,36 @@
       "options": {
         "command": "tsc -p apps/api/tsconfig.app.json --noEmit"
       }
+    },
+    "db:generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma generate --schema=apps/api/prisma/schema.prisma"
+      }
+    },
+    "db:migrate-dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma migrate dev --schema=apps/api/prisma/schema.prisma"
+      }
+    },
+    "db:migrate-deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma migrate deploy --schema=apps/api/prisma/schema.prisma"
+      }
+    },
+    "db:reset": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma migrate reset --schema=apps/api/prisma/schema.prisma --force"
+      }
+    },
+    "db:seed": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx apps/api/scripts/seed.ts"
+      }
     }
   }
 }

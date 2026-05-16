@@ -57,11 +57,24 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       const status = exception.getStatus();
       const response = exception.getResponse();
       const title = HTTP_TITLES[status] ?? exception.name;
+      if (typeof response === 'string') {
+        return {
+          type: 'about:blank',
+          title,
+          status,
+          detail: response,
+          instance,
+          traceId,
+        };
+      }
+      const resp = response as Record<string, unknown>;
+      const { statusCode: _statusCode, message, error: _error, ...extras } = resp;
       const detail =
-        typeof response === 'string'
-          ? response
-          : ((response as { message?: string | string[] }).message?.toString() ??
-            exception.message);
+        typeof message === 'string'
+          ? message
+          : Array.isArray(message)
+            ? message.join('; ')
+            : exception.message;
       return {
         type: 'about:blank',
         title,
@@ -69,6 +82,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         detail,
         instance,
         traceId,
+        ...extras,
       };
     }
 

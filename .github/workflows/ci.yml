@@ -16,6 +16,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tcg
+          POSTGRES_PASSWORD: tcg
+          POSTGRES_DB: tcg_arena
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tcg -d tcg_arena"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://tcg:tcg@localhost:5432/tcg_arena?schema=public
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +51,12 @@ jobs:
 
       - name: Derive nx affected base
         uses: nrwl/nx-set-shas@v4
+
+      - name: Apply database migrations
+        run: npx nx run api:db:migrate-deploy
+
+      - name: Generate Prisma client
+        run: npx nx run api:db:generate
 
       - name: Lint
         run: npx nx affected --target=lint --parallel=3
