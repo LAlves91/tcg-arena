@@ -29,6 +29,10 @@ yarn-error.log
 !.vscode/mcp.json
 .history/*
 
+# Nx
+/.nx/cache
+/.nx/workspace-data
+
 # Miscellaneous
 /.angular/cache
 .sass-cache/
@@ -42,3 +46,5 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+vitest.config.*.timestamp*
