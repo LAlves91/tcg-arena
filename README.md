@@ -1,59 +1,44 @@
-# TcgArena
+# TCG Arena
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.8.
+A platform for playing physical trading card games remotely. See [`BUSINESS_SPECS.md`](./BUSINESS_SPECS.md) for the product spec and [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) for the step-by-step build plan.
 
-## Development server
+## Repository layout
 
-To start a local development server, run:
+Nx monorepo (npm).
 
-```bash
-ng serve
+```
+apps/web/     Angular 21 PWA (also served as a Discord Activity)
+apps/api/     NestJS backend
+libs/shared/  Cross-app types and contracts (import as @tcg/shared)
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Prerequisites
 
-## Code scaffolding
+- Node 22+
+- npm 10+
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Install
 
 ```bash
-ng generate --help
+npm install --legacy-peer-deps
 ```
 
-## Building
+`--legacy-peer-deps` is required while Nx 22's optional peer on `@angular-devkit/build-angular` clashes with the Angular 21 toolchain we actually use (`@angular/build`).
 
-To build the project run:
+## Common commands
 
 ```bash
-ng build
+npm run start:web     # nx serve web   — http://localhost:4200
+npm run start:api     # nx serve api   — http://localhost:3000/api
+npm run build:web     # nx build web
+npm run build:api     # nx build api
+npm test              # nx run-many --target=test --all
+npm run lint          # nx run-many --target=lint --all
+npm run graph         # nx graph
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Run any Nx target directly with `npx nx <target> <project>`.
 
-## Running unit tests
+## Contributing
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Read [`ARCHITECTURE_GUIDELINES.md`](./ARCHITECTURE_GUIDELINES.md) (Angular conventions for `apps/web`) and follow the step-by-step build plan in [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md). One step → one branch → one PR.
