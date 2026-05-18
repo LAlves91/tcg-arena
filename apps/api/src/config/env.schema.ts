@@ -7,6 +7,9 @@ export const envSchema = z.object({
   WEB_ORIGIN: z.string().url(),
   DISCORD_ACTIVITY_ORIGIN: z.string().url(),
   DATABASE_URL: z.string().url(),
+  REDIS_HOST: z.string().min(1).default('localhost'),
+  REDIS_PORT: z.coerce.number().int().positive().default(6379),
+  REDIS_PASSWORD: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
