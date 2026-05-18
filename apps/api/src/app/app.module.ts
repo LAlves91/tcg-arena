@@ -7,8 +7,10 @@ import { LoggerModule } from '../common/logger/logger.module';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { EnvModule } from '../config/env.module';
 import { DbModule } from '../db/db.module';
+import { FriendsModule } from '../friends/friends.module';
 import { HealthModule } from '../health/health.module';
 import { RealtimeModule } from '../realtime/realtime.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { RealtimeModule } from '../realtime/realtime.module';
     CacheModule,
     AuthModule,
     RealtimeModule,
+    UsersModule,
+    FriendsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
