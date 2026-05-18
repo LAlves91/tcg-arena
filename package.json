@@ -33,6 +33,7 @@
     "@nestjs/platform-fastify": "^11.1.21",
     "@prisma/client": "^6.19.3",
     "axios": "^1.6.0",
+    "ioredis": "^5.10.1",
     "nestjs-pino": "^4.6.1",
     "nestjs-zod": "^4.3.1",
     "pino": "^9.14.0",
