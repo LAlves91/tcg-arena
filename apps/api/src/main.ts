@@ -8,6 +8,7 @@ import type { Http2ServerRequest } from 'node:http2';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from './app/app.module';
 import { EnvService } from './config/env.service';
+import { RedisIoAdapter } from './realtime/redis-io.adapter';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -38,6 +39,10 @@ async function bootstrap(): Promise<void> {
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Authorization', 'Content-Type', 'X-Trace-Id'],
   });
+
+  const ioAdapter = new RedisIoAdapter(app);
+  await ioAdapter.connectToRedis(env);
+  app.useWebSocketAdapter(ioAdapter);
 
   app.enableShutdownHooks();
 
