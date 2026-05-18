@@ -8,9 +8,18 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { EnvModule } from '../config/env.module';
 import { DbModule } from '../db/db.module';
 import { HealthModule } from '../health/health.module';
+import { RealtimeModule } from '../realtime/realtime.module';
 
 @Module({
-  imports: [EnvModule, LoggerModule, HealthModule, DbModule, CacheModule, AuthModule],
+  imports: [
+    EnvModule,
+    LoggerModule,
+    HealthModule,
+    DbModule,
+    CacheModule,
+    AuthModule,
+    RealtimeModule,
+  ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
